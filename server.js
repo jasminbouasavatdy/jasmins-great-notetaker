@@ -1,4 +1,3 @@
-const { application } = require('express');
 const uuid = require('./helpers/uuid');
 const express = require('express');
 const path = require('path');
@@ -18,16 +17,14 @@ app.get('/notes', (req, res) => {
 })
 
 app.get('/api/notes', (req, res) => {
-  fs.readFile('./db/db.json', 'utf-8', function (err, data) {
-    console.log('data loaded', JSON.parse(data))
-    res.json(JSON.parse(data))
-  })
+  res.status(200).json(`${req.method} request recieved to GET notes`)
+  
+  console.info(`${req.method} request recieved to GET notes`)
 })
 
 
 app.post('/api/notes', (req, res) => {
-  console.info(`${req.method}request recieved to add notes`);
-  res.json(`${req.method} request recieved to get notes`);
+  console.info(`${req.method} request recieved to add notes`);
 
   const { title, text } = req.body;
 
@@ -39,13 +36,23 @@ app.post('/api/notes', (req, res) => {
       review_id: uuid(),
     };
 
-    const noteString = JSON.stringify(newNote, null, 2);
 
-    fs.writeFile(`./db/${newNote.title}.json`, noteString, (err) =>
-      err
-        ? console.error(err)
-        : console.log(`Note for ${newNote.title} has been written to JSON file`)
-    );
+    fs.readFile('./db/db.json', 'utf8', ( err, data) => {
+      if (err) {
+        console.err(err);
+      }else {
+        const parsedNotes = JSON.parse(data);
+
+        parsedNotes.push(newNote);
+
+        fs.writeFile(`./db/db.json`,JSON.stringify(parsedNotes, null, 2),
+        (writeErr)=>
+        writeErr
+        ? console.error(writeErr)
+        : console.info('Sucessfully wrote a new note!')
+        );
+      }
+    })
 
     const response = {
       status: 'success',
